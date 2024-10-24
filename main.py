@@ -16,7 +16,6 @@ CREATE TABLE IF NOT EXISTS player (
 conn.commit()
 
 def add_player(name):
-    # 初始化玩家的物品清單為空 JSON
     inventory = json.dumps({"weapons": [], "potions": 0})
     cursor.execute("INSERT INTO player (name, inventory) VALUES (?, ?)", (name, inventory))
     conn.commit()
@@ -28,12 +27,11 @@ def get_player(name):
 def update_inventory(name, weapon=None, potions=0):
     player = get_player(name)
     if player:
-        inventory = json.loads(player[2])  # 解析 JSON
+        inventory = json.loads(player[2])
         if weapon:
             inventory["weapons"].append(weapon)
         inventory["potions"] += potions
         
-        # 更新玩家的物品清單
         cursor.execute("UPDATE player SET inventory = ? WHERE name = ?", (json.dumps(inventory), name))
         conn.commit()
         print(f"{name} 的物品清單已更新：{inventory}")
@@ -51,25 +49,45 @@ def show_inventory(name):
 # 主遊戲邏輯
 def main():
     print("歡迎來到簡易 RPG 遊戲！")
-    player_name = input("請輸入你的名字：")
-    add_player(player_name)
+    
+    # 選擇或創建玩家
+    player_name = input("請輸入玩家名稱：")
+    
+    # 檢查玩家是否已存在
+    cursor.execute("SELECT * FROM player WHERE name = ?", (player_name,))
+    player = cursor.fetchone()
+    
+    if player:
+        print(f"歡迎回來，{player_name}！")
+    else:
+        print(f"新玩家 {player_name} 創建成功！")
+        add_player(player)
     
     while True:
         action = input("你想做什麼？(1: 獲得武器, 2: 獲得藥水, 3: 查看物品清單, 4: 退出) ")
         
-        if action == '1':
-            weapon = input("請輸入獲得的武器名稱：")
-            update_inventory(player_name, weapon=weapon)
-        elif action == '2':
-            potions = int(input("請輸入獲得的藥水數量："))
-            update_inventory(player_name, potions=potions)
-        elif action == '3':
-            show_inventory(player_name)
-        elif action == '4':
-            print("再見！")
-            break
-        else:
-            print("無效的選擇，請重新輸入！")
+        try:
+            if action == '1':
+                weapon = input("請輸入獲得的武器名稱：")
+                if not weapon.strip():
+                    raise ValueError("武器名稱不能為空！")
+                update_inventory(player_name, weapon=weapon)
+            elif action == '2':
+                potions = int(input("請輸入獲得的藥水數量："))
+                if potions < 0:
+                    raise ValueError("藥水數量不能為負數！")
+                update_inventory(player_name, potions=potions)
+            elif action == '3':
+                show_inventory(player_name)
+            elif action == '4':
+                print("再見！")
+                break
+            else:
+                print("無效的選擇，請重新輸入！")
+        except ValueError as e:
+            print(f"輸入錯誤：{e}")
+        except Exception as e:
+            print(f"發生錯誤：{e}")
 
 if __name__ == "__main__":
     main()
