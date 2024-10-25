@@ -21,30 +21,47 @@ conn.commit()
 # 主遊戲邏輯
 def main():
     print("歡迎來到簡易 RPG 遊戲！")
-    # 使用 fetchall() 獲取所有結果
-    All_players = cursor.fetchall()
-
-    # 打印所有玩家的名字
-    for players in All_players:
-        print(players[0])  # player 是一個元組，名字在第一個位置
+    # 顯示所有玩家名字
+    # player.show_all_players(cursor)
 
     # 選擇或創建玩家
-    player_name = input("你是？ ")
-    
-    # 檢查玩家是否已存在，同時獲得此player cursor.fetchone()
-    player_data = player.get_player(cursor, player_name)  # 使用 player 前綴
-    
-    if player_data:
-        print(f"歡迎回來，{player_name}！")
-    else:
-        check = input("即將創建新玩家，輸入yes繼續： ")
-        if (check=="yes"):
-            print(f"新玩家 {player_name} 創建成功！")
-            player.add_player(cursor, player_name)
-            conn.commit()
-        else:
+    while True:
+        player.show_all_players(cursor)
+        player_name = input("你是誰？\n(exit離開、del刪除玩家)\n")
+        
+        # 檢查玩家是否已存在，同時獲得此player cursor.fetchone()
+        player_data = player.get_player(cursor, player_name)
+        if (player_name=="exit"):
             print("遊戲結束~")
             exit()
+            break
+
+        # 功能--刪除
+        if (player_name=="del"):
+            player_name = input("輸入要刪除的玩家名：")
+            player_data = player.get_player(cursor, player_name)
+            if player_data:
+                check = input("即將刪除玩家，輸入yes繼續：")
+                if (check=="yes"):
+                    player.del_player(cursor, player_name)
+            else:
+                print("查無玩家")
+        elif player_data:
+            print(f"歡迎回來，{player_name}！")
+            check = input("開始遊戲？(go) ")
+            if (check=="go"):
+                break        
+        else:
+            check = input("即將創建新玩家，輸入yes繼續： ")
+            if (check=="yes"):
+                print(f"新玩家 {player_name} 創建成功！即將開始遊戲...")
+                player.add_player(cursor, player_name)
+                break
+                # conn.commit() # player.py 已經處理過
+            else:
+                print("未成功建立玩家")
+
+    
     
     while True:
         action = input("你想做什麼？(1: 獲得武器, 2: 獲得藥水, 3: 查看物品清單, 4: 退出) ")

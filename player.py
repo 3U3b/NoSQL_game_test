@@ -68,13 +68,26 @@ def update_inventory(cursor, name, weapon=None, potions=0):
         cursor.connection.commit()
 
         print(f"{name} 的物品清單已更新：{inventory}")
-    else:
-        print("玩家不存在！")
+    # else:
+    #     print("玩家不存在！")
+
+def del_player(cursor, name):
+    cursor.execute("DELETE FROM player WHERE name = ?", (name,))
+    cursor.connection.commit()  
+    print(f"玩家 {name} 已被删除。")
 
 def show_inventory(cursor, name):
     player = get_player(cursor, name)
     if player:
         inventory = json.loads(player[2])
         print(f"{name} 的物品清單：{inventory}")
-    else:
-        print("玩家不存在！")
+    # else:
+    #     print("玩家不存在！")
+
+def show_all_players(cursor):
+    print("---------------")
+    cursor.execute("SELECT name FROM player")  # 執行查詢
+    all_players = cursor.fetchall()
+    # 印所有玩家的名字
+    for i, player in enumerate(all_players, start=1):  # enmerate
+        print(f'{i}: {player[0]}')  # player 是一個元組，名字在第一個位置
